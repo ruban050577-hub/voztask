@@ -332,6 +332,8 @@ if (!window.SpeechRecognition && !window.webkitSpeechRecognition) {
 }
 
 // ── RECORD ─────────────────────────────────────────────
+const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+
 function toggleRec() {
   isRec ? stopRec() : startRec();
 }
@@ -344,7 +346,7 @@ function makeRec() {
   r.continuous = false;
   r.maxAlternatives = 1;
 
-  let lastFinal = ''; // captura o ultimo resultado final da sessao
+  let lastFinal = '';
 
   r.onresult = e => {
     let interim = '', finalText = '';
@@ -352,21 +354,30 @@ function makeRec() {
       const t = e.results[i][0].transcript;
       e.results[i].isFinal ? (finalText += t) : (interim += t);
     }
-    if (finalText) lastFinal = finalText; // so salva, nao acumula
-    // exibe sem modificar fullTx ainda
+    if (finalText) lastFinal = finalText;
     document.getElementById('txtext').textContent = (fullTx + lastFinal + interim).trim() || '...';
     document.getElementById('txbox').classList.add('show');
   };
 
   r.onerror = e => {
-    if (e.error !== 'no-speech') { toast('Erro: ' + e.error); stopRec(); }
+    if (e.error === 'not-allowed') {
+      toast('Permita o microfone: Ajustes > Safari > Microfone');
+      stopRec();
+    } else if (e.error !== 'no-speech') {
+      toast('Erro: ' + e.error);
+      stopRec();
+    }
   };
 
   r.onend = () => {
-    if (lastFinal) fullTx += lastFinal + ' '; // acumula UMA vez ao terminar sessao
+    if (lastFinal) fullTx += lastFinal + ' ';
     if (isRec) {
-      rec = makeRec();
-      try { rec.start(); } catch(e) {}
+      // iOS Safari precisa de um delay antes de reiniciar
+      setTimeout(() => {
+        if (!isRec) return;
+        rec = makeRec();
+        try { rec.start(); } catch(e) { stopRec(); }
+      }, isIOS ? 350 : 0);
     }
   };
 
@@ -375,7 +386,7 @@ function makeRec() {
 
 function startRec() {
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-  if (!SR) return toast('Use Chrome no Android para gravar');
+  if (!SR) return toast('Use Chrome (Android) ou Safari (iOS)');
 
   fullTx = '';
   isRec = true;
@@ -392,8 +403,21 @@ function startRec() {
   p2.classList.add('on');
   document.getElementById('txbox').classList.remove('show');
 
-  rec = makeRec();
-  rec.start();
+  // iOS: pede permissão de microfone antes de iniciar
+  if (isIOS && navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+    navigator.mediaDevices.getUserMedia({ audio: true })
+      .then(() => {
+        rec = makeRec();
+        try { rec.start(); } catch(e) { toast('Erro ao iniciar microfone'); stopRec(); }
+      })
+      .catch(() => {
+        toast('Permita o microfone: Ajustes > Safari > Microfone');
+        stopRec();
+      });
+  } else {
+    rec = makeRec();
+    try { rec.start(); } catch(e) { toast('Erro ao iniciar microfone'); stopRec(); }
+  }
 }
 
 function stopRec() {
