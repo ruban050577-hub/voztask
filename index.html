@@ -344,14 +344,17 @@ function makeRec() {
   r.continuous = false;
   r.maxAlternatives = 1;
 
+  let lastFinal = ''; // captura o ultimo resultado final da sessao
+
   r.onresult = e => {
-    let finalText = '', interim = '';
+    let interim = '', finalText = '';
     for (let i = 0; i < e.results.length; i++) {
       const t = e.results[i][0].transcript;
-      e.results[i].isFinal ? (finalText += t + ' ') : (interim += t);
+      e.results[i].isFinal ? (finalText += t) : (interim += t);
     }
-    if (finalText) fullTx += finalText;
-    document.getElementById('txtext').textContent = (fullTx + interim).trim() || '...';
+    if (finalText) lastFinal = finalText; // so salva, nao acumula
+    // exibe sem modificar fullTx ainda
+    document.getElementById('txtext').textContent = (fullTx + lastFinal + interim).trim() || '...';
     document.getElementById('txbox').classList.add('show');
   };
 
@@ -360,6 +363,7 @@ function makeRec() {
   };
 
   r.onend = () => {
+    if (lastFinal) fullTx += lastFinal + ' '; // acumula UMA vez ao terminar sessao
     if (isRec) {
       rec = makeRec();
       try { rec.start(); } catch(e) {}
