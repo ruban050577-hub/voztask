@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="VozTask">
+<meta name="theme-color" content="#0A0A0A">
+<title>VozTask</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@600;700&family=DM+Sans:opsz,wght@9..40,400;9..40,500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0A0A0A;
+  --surface: #161616;
+  --surface2: #1E1E1E;
+  --border: #2C2C2C;
+  --accent: #FF5533;
+  --accent-glow: rgba(255,85,51,0.18);
+  --text: #F0EDE8;
+  --muted: #888880;
+  --dim: #484844;
+  --green: #3DBA7E;
+  --r: 14px;
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;font-size:16px;overscroll-behavior:none;-webkit-text-size-adjust:100%}
+
+#app{
+  min-height:100vh;
+  min-height:100dvh;
+  display:flex;
+  flex-direction:column;
+  padding-bottom:env(safe-area-inset-bottom,16px);
+}
+
+/* HEADER */
+.hd{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:calc(52px + env(safe-area-inset-top,0px)) 20px 16px;
+}
+.logo{font-family:'Oswald',sans-serif;font-size:24px;font-weight:700;letter-spacing:.06em}
+.logo em{color:var(--accent);font-style:normal}
+.ico-btn{
+  width:38px;height:38px;border-radius:50%;
+  background:var(--surface);border:1px solid var(--border);
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;color:var(--muted);font-size:17px;
+  transition:border-color .15s;
+}
+.ico-btn:active{background:var(--surface2)}
+
+/* COUNTER PILL */
+.counter{
+  display:flex;align-items:center;gap:10px;
+  padding:0 20px 20px;
+}
+.pill{
+  font-size:12px;font-weight:500;padding:4px 12px;
+  border-radius:99px;border:1px solid var(--border);
+  color:var(--muted);background:var(--surface);
+}
+.pill em{font-style:normal;color:var(--text)}
+
+/* RECORD ZONE */
+.rec-zone{
+  display:flex;flex-direction:column;
+  align-items:center;padding:12px 20px 28px;gap:14px;
+}
+.rec-wrap{position:relative;width:136px;height:136px}
+.pulse{
+  position:absolute;inset:-20px;border-radius:50%;
+  border:2px solid var(--accent);opacity:0;pointer-events:none;
+}
+.on .pulse{animation:pulse 1.5s ease-out infinite}
+@keyframes pulse{
+  0%{transform:scale(.82);opacity:.65}
+  100%{transform:scale(1.35);opacity:0}
+}
+.pulse2{animation-delay:.5s!important}
+.rec-btn{
+  position:relative;z-index:1;
+  width:136px;height:136px;border-radius:50%;
+  background:var(--surface);border:2px solid var(--border);
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;transition:all .25s ease;
+  font-size:44px;user-select:none;
+}
+.rec-btn.on{background:var(--accent);border-color:var(--accent);box-shadow:0 0 40px var(--accent-glow)}
+.rec-btn:active{transform:scale(.93)}
+.rec-label{
+  font-size:12px;font-weight:500;letter-spacing:.08em;
+  text-transform:uppercase;color:var(--muted);height:18px;
+  transition:color .2s;
+}
+.rec-btn.on ~ .rec-label{color:var(--accent)}
+
+/* TRANSCRIPT */
+.txbox{
+  margin:0 20px;background:var(--surface);
+  border:1px solid var(--border);border-radius:var(--r);
+  padding:14px 16px;display:none;
+}
+.txbox.show{display:block}
+.txlabel{font-size:11px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--dim);margin-bottom:8px}
+.txtext{font-size:14px;color:var(--muted);line-height:1.55;min-height:20px}
+
+/* PROCESSING */
+.proc{
+  margin:12px 20px;padding:12px 16px;
+  background:var(--accent-glow);border-radius:var(--r);
+  display:none;align-items:center;gap:10px;
+}
+.proc.show{display:flex}
+.spin{
+  width:16px;height:16px;flex-shrink:0;
+  border:2px solid rgba(255,85,51,.25);border-top-color:var(--accent);
+  border-radius:50%;animation:spin .7s linear infinite;
+}
+@keyframes spin{to{transform:rotate(360deg)}}
+.proc-txt{font-size:13px;font-weight:500;color:var(--accent)}
+
+/* DIVIDER */
+.div-row{
+  display:none;align-items:center;gap:12px;
+  margin:16px 20px 0;
+}
+.div-row.show{display:flex}
+.div-line{flex:1;height:1px;background:var(--border)}
+.div-txt{font-size:11px;font-weight:500;letter-spacing:.07em;text-transform:uppercase;color:var(--dim)}
+
+/* FILTERS */
+.filters{
+  display:none;gap:7px;padding:12px 20px 0;
+}
+.filters.show{display:flex}
+.fbtn{
+  flex:1;padding:8px 6px;border-radius:8px;
+  border:1px solid var(--border);background:transparent;
+  color:var(--muted);font-family:'DM Sans',sans-serif;
+  font-size:13px;font-weight:500;cursor:pointer;
+  transition:all .15s;
+}
+.fbtn.active{background:var(--accent);border-color:var(--accent);color:#fff}
+
+/* CLEAR */
+.clear-btn{
+  display:none;margin:10px 20px 0;width:calc(100% - 40px);
+  padding:10px 16px;background:transparent;
+  border:1px dashed var(--border);border-radius:10px;
+  color:var(--dim);font-family:'DM Sans',sans-serif;
+  font-size:13px;cursor:pointer;
+}
+.clear-btn.show{display:block}
+.clear-btn:active{background:var(--surface)}
+
+/* TASK LIST */
+.tasks{
+  flex:1;padding:10px 20px 20px;
+  display:flex;flex-direction:column;gap:8px;
+  overflow-y:auto;
+}
+.empty{
+  display:flex;flex-direction:column;align-items:center;
+  padding:40px 16px;gap:10px;color:var(--dim);
+}
+.empty-ico{font-size:36px;opacity:.6}
+.empty-txt{font-size:14px;text-align:center;line-height:1.5}
+
+.task{
+  display:flex;align-items:flex-start;gap:14px;
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--r);padding:14px 16px;
+  cursor:pointer;
+  animation:in .22s ease;
+  transition:opacity .2s,border-color .2s;
+}
+@keyframes in{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:none}}
+.task.done{opacity:.4;border-color:transparent}
+.chk{
+  width:24px;height:24px;flex-shrink:0;margin-top:1px;
+  border-radius:50%;border:2px solid var(--border);
+  display:flex;align-items:center;justify-content:center;
+  transition:all .2s ease;font-size:12px;color:#fff;
+}
+.task.done .chk{background:var(--green);border-color:var(--green)}
+.chk-ico{display:none}
+.task.done .chk-ico{display:block}
+.task-txt{font-size:15px;line-height:1.45;flex:1;padding-top:2px}
+.task.done .task-txt{text-decoration:line-through}
+
+/* SETTINGS MODAL */
+.overlay{
+  position:fixed;inset:0;background:rgba(0,0,0,.87);
+  z-index:100;display:none;align-items:flex-end;
+}
+.overlay.show{display:flex}
+.sheet{
+  width:100%;background:var(--surface);
+  border-radius:20px 20px 0 0;border:1px solid var(--border);border-bottom:none;
+  padding:24px 20px calc(24px + env(safe-area-inset-bottom,16px));
+}
+.sheet-title{font-family:'Oswald',sans-serif;font-size:18px;font-weight:600;margin-bottom:20px}
+.flabel{font-size:12px;color:var(--muted);font-weight:500;letter-spacing:.05em;text-transform:uppercase;margin-bottom:8px}
+.finput{
+  width:100%;background:var(--bg);
+  border:1px solid var(--border);border-radius:10px;
+  padding:12px 14px;color:var(--text);
+  font-family:'DM Sans',sans-serif;font-size:14px;
+  outline:none;margin-bottom:16px;
+}
+.finput:focus{border-color:var(--accent)}
+.info-note{
+  font-size:12px;color:var(--dim);line-height:1.5;
+  margin-bottom:20px;padding:10px 14px;
+  background:var(--surface2);border-radius:8px;
+}
+.info-note a{color:var(--accent);text-decoration:none}
+.save-btn{
+  width:100%;padding:14px;background:var(--accent);border:none;
+  border-radius:12px;color:#fff;font-family:'Oswald',sans-serif;
+  font-size:16px;font-weight:700;letter-spacing:.06em;cursor:pointer;
+}
+.save-btn:active{opacity:.85}
+.cancel-link{
+  display:block;width:100%;padding:12px;background:transparent;border:none;
+  color:var(--muted);font-family:'DM Sans',sans-serif;font-size:14px;
+  cursor:pointer;margin-top:6px;
+}
+
+/* TOAST */
+.toast{
+  position:fixed;bottom:calc(28px + env(safe-area-inset-bottom,0px));
+  left:50%;transform:translateX(-50%);
+  background:#1C1008;border:1px solid #553322;color:#FF9977;
+  padding:9px 20px;border-radius:99px;font-size:13px;font-weight:500;
+  white-space:nowrap;z-index:200;pointer-events:none;
+  animation:tin .22s ease,tout .22s ease 2.3s forwards;
+}
+.toast.ok{background:#081C10;border-color:#225533;color:#55BB77}
+@keyframes tin{from{opacity:0;transform:translateX(-50%) translateY(8px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
+@keyframes tout{to{opacity:0;transform:translateX(-50%) translateY(8px)}}
+</style>
+</head>
+<body>
+<div id="app">
+
+  <div class="hd">
+    <div class="logo">VOZ<em>TASK</em></div>
+    <div class="ico-btn" onclick="openSettings()" role="button" aria-label="Configurações">⚙</div>
+  </div>
+
+  <div class="counter" id="counter" style="display:none">
+    <div class="pill" id="pillPending"></div>
+    <div class="pill" id="pillDone"></div>
+  </div>
+
+  <div class="rec-zone">
+    <div class="rec-wrap" id="recWrap">
+      <div class="pulse" id="p1"></div>
+      <div class="pulse pulse2" id="p2"></div>
+      <button class="rec-btn" id="recBtn" onclick="toggleRec()" aria-label="Gravar ideia">🎙</button>
+    </div>
+    <div class="rec-label" id="recLabel">Toque para falar</div>
+  </div>
+
+  <div class="txbox" id="txbox">
+    <div class="txlabel">Transcrição</div>
+    <div class="txtext" id="txtext"></div>
+  </div>
+
+  <div class="proc" id="proc">
+    <div class="spin"></div>
+    <div class="proc-txt">Identificando tarefas...</div>
+  </div>
+
+  <div class="div-row" id="divrow">
+    <div class="div-line"></div>
+    <div class="div-txt">Tarefas</div>
+    <div class="div-line"></div>
+  </div>
+
+  <div class="filters" id="filters">
+    <button class="fbtn active" onclick="setFilter('all')" id="fa">Todas</button>
+    <button class="fbtn" onclick="setFilter('pending')" id="fp">Pendentes</button>
+    <button class="fbtn" onclick="setFilter('done')" id="fd">Feitas</button>
+  </div>
+
+  <button class="clear-btn" id="clearBtn" onclick="clearDone()">🗑 Limpar concluídas</button>
+
+  <div class="tasks" id="tasks">
+    <div class="empty" id="empty">
+      <div class="empty-ico">📋</div>
+      <div class="empty-txt">Fale uma ideia para criar tarefas</div>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="modal" onclick="onOverlay(event)">
+  <div class="sheet">
+    <div class="sheet-title">⚙ Configurações</div>
+    <div class="flabel">Chave da API Anthropic</div>
+    <input class="finput" type="password" id="apiInput" placeholder="sk-ant-..." autocomplete="off" spellcheck="false">
+    <div class="info-note">
+      Necessária para extração inteligente de tarefas via IA.<br>
+      Sem chave: modo simples (divisão por pontuação).<br>
+      Obtenha em <a href="https://console.anthropic.com" target="_blank">console.anthropic.com</a>
+    </div>
+    <button class="save-btn" onclick="saveSettings()">SALVAR</button>
+    <button class="cancel-link" onclick="closeSettings()">Cancelar</button>
+  </div>
+</div>
+
+<script>
+// ── STATE ──────────────────────────────────────────────
+let tasks = JSON.parse(localStorage.getItem('vt_tasks') || '[]');
+let apiKey = localStorage.getItem('vt_key') || '';
+let filter = 'all';
+let rec = null;
+let isRec = false;
+let fullTx = '';
+
+// ── BOOT ───────────────────────────────────────────────
+render();
+if (!window.SpeechRecognition && !window.webkitSpeechRecognition) {
+  document.getElementById('recLabel').textContent = 'Micro não suportado';
+  document.getElementById('recBtn').style.opacity = '.4';
+  document.getElementById('recBtn').style.pointerEvents = 'none';
+}
+
+// ── RECORD ─────────────────────────────────────────────
+function toggleRec() {
+  isRec ? stopRec() : startRec();
+}
+
+function startRec() {
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR) return toast('Use Chrome no Android para gravar');
+
+  rec = new SR();
+  rec.lang = 'pt-BR';
+  rec.interimResults = true;
+  rec.continuous = true;
+  fullTx = '';
+  isRec = true;
+
+  const btn = document.getElementById('recBtn');
+  const wrap = document.getElementById('recWrap');
+  const lbl = document.getElementById('recLabel');
+  const p1 = document.getElementById('p1');
+  const p2 = document.getElementById('p2');
+
+  btn.classList.add('on');
+  btn.textContent = '⏹';
+  lbl.textContent = 'Ouvindo...';
+  p1.classList.add('on');
+  p2.classList.add('on');
+
+  const tb = document.getElementById('txbox');
+  const tt = document.getElementById('txtext');
+  tb.classList.remove('show');
+
+  rec.onresult = e => {
+    let interim = '', final = '';
+    for (let i = e.resultIndex; i < e.results.length; i++) {
+      const t = e.results[i][0].transcript;
+      e.results[i].isFinal ? (final += t + ' ') : (interim += t);
+    }
+    if (final) fullTx += final;
+    tt.textContent = (fullTx + interim).trim() || '...';
+    tb.classList.add('show');
+  };
+
+  rec.onerror = e => {
+    if (e.error !== 'no-speech') { toast('Erro: ' + e.error); stopRec(); }
+  };
+
+  rec.onend = () => {
+    if (isRec) { try { rec.start(); } catch(e){} }
+  };
+
+  rec.start();
+}
+
+function stopRec() {
+  isRec = false;
+  if (rec) { rec.onend = null; rec.stop(); }
+
+  const btn = document.getElementById('recBtn');
+  const p1 = document.getElementById('p1');
+  const p2 = document.getElementById('p2');
+
+  btn.classList.remove('on');
+  btn.textContent = '🎙';
+  document.getElementById('recLabel').textContent = 'Toque para falar';
+  p1.classList.remove('on');
+  p2.classList.remove('on');
+
+  const tx = fullTx.trim();
+  if (tx.length > 3) parseTasks(tx);
+}
+
+// ── PARSE TASKS ────────────────────────────────────────
+async function parseTasks(tx) {
+  if (!apiKey) {
+    return addTasks(fallbackSplit(tx));
+  }
+
+  document.getElementById('proc').classList.add('show');
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
+      body: JSON.stringify({
+        model: 'claude-haiku-4-5-20251001',
+        max_tokens: 512,
+        system: `Você extrai tarefas de um texto em português. 
+Retorne APENAS um JSON array de strings, sem markdown, sem explicação. 
+Cada item deve ser uma tarefa clara e acionável em linguagem direta.
+Exemplo de saída: ["Ligar para fornecedor", "Revisar cardápio"]`,
+        messages: [{ role: 'user', content: tx }]
+      })
+    });
+
+    const d = await res.json();
+    if (d.error) throw new Error(d.error.message);
+
+    const raw = d.content[0].text.trim().replace(/```json|```/g, '').trim();
+    const parsed = JSON.parse(raw);
+    addTasks(Array.isArray(parsed) ? parsed.map(String) : fallbackSplit(tx));
+
+  } catch(err) {
+    console.error(err);
+    addTasks(fallbackSplit(tx));
+    if (String(err.message).includes('401')) toast('Chave API inválida');
+    else if (String(err.message).includes('CORS') || String(err.message).includes('Failed to fetch'))
+      toast('Erro de rede — verifique a chave API');
+  } finally {
+    document.getElementById('proc').classList.remove('show');
+  }
+}
+
+function fallbackSplit(tx) {
+  return tx
+    .split(/[.;!?\n]|,\s*e\s+/)
+    .map(s => {
+      s = s.trim();
+      if (s && !/^[a-z]/.test(s)) s = s.charAt(0).toUpperCase() + s.slice(1);
+      return s;
+    })
+    .filter(s => s.length > 4);
+}
+
+// ── TASKS ──────────────────────────────────────────────
+function addTasks(list) {
+  list.forEach(text => {
+    if (text) tasks.push({ id: Date.now() + Math.random(), text, done: false, ts: Date.now() });
+  });
+  save();
+  render();
+}
+
+function toggleTask(id) {
+  const t = tasks.find(x => x.id === id);
+  if (t) { t.done = !t.done; save(); render(); }
+}
+
+function clearDone() {
+  tasks = tasks.filter(t => !t.done);
+  save();
+  render();
+  toast('Concluídas removidas', true);
+}
+
+function setFilter(f) {
+  filter = f;
+  ['all','pending','done'].forEach(k => {
+    document.getElementById('f' + k[0]).classList.toggle('active', k === f);
+  });
+  render();
+}
+
+function save() { localStorage.setItem('vt_tasks', JSON.stringify(tasks)); }
+
+// ── RENDER ─────────────────────────────────────────────
+function render() {
+  const container = document.getElementById('tasks');
+  const hasAny = tasks.length > 0;
+  const hasDone = tasks.some(t => t.done);
+  const pending = tasks.filter(t => !t.done).length;
+  const done = tasks.filter(t => t.done).length;
+
+  document.getElementById('divrow').classList.toggle('show', hasAny);
+  document.getElementById('filters').classList.toggle('show', hasAny);
+  document.getElementById('clearBtn').classList.toggle('show', hasDone);
+
+  const counter = document.getElementById('counter');
+  if (hasAny) {
+    counter.style.display = 'flex';
+    document.getElementById('pillPending').innerHTML = `<em>${pending}</em> pendente${pending !== 1 ? 's' : ''}`;
+    document.getElementById('pillDone').innerHTML = `<em>${done}</em> feita${done !== 1 ? 's' : ''}`;
+  } else {
+    counter.style.display = 'none';
+  }
+
+  let list = tasks;
+  if (filter === 'pending') list = tasks.filter(t => !t.done);
+  if (filter === 'done') list = tasks.filter(t => t.done);
+
+  if (list.length === 0) {
+    const msg = !hasAny
+      ? 'Fale uma ideia para criar tarefas'
+      : filter === 'pending' ? 'Nenhuma tarefa pendente 🎉'
+      : 'Nenhuma tarefa concluída';
+    container.innerHTML = `<div class="empty"><div class="empty-ico">${!hasAny ? '📋' : '✅'}</div><div class="empty-txt">${msg}</div></div>`;
+    return;
+  }
+
+  container.innerHTML = '';
+  list.forEach(t => {
+    const el = document.createElement('div');
+    el.className = 'task' + (t.done ? ' done' : '');
+    el.innerHTML = `<div class="chk"><span class="chk-ico">✓</span></div><div class="task-txt">${esc(t.text)}</div>`;
+    el.onclick = () => toggleTask(t.id);
+    container.appendChild(el);
+  });
+}
+
+function esc(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// ── SETTINGS ───────────────────────────────────────────
+function openSettings() {
+  document.getElementById('apiInput').value = apiKey;
+  document.getElementById('modal').classList.add('show');
+}
+function closeSettings() { document.getElementById('modal').classList.remove('show'); }
+function onOverlay(e) { if (e.target === document.getElementById('modal')) closeSettings(); }
+function saveSettings() {
+  apiKey = document.getElementById('apiInput').value.trim();
+  localStorage.setItem('vt_key', apiKey);
+  closeSettings();
+  toast('Salvo ✓', true);
+}
+
+// ── TOAST ──────────────────────────────────────────────
+function toast(msg, ok) {
+  document.querySelectorAll('.toast').forEach(el => el.remove());
+  const el = document.createElement('div');
+  el.className = 'toast' + (ok ? ' ok' : '');
+  el.textContent = msg;
+  document.body.appendChild(el);
+  setTimeout(() => el.remove(), 2800);
+}
+</script>
+</body>
+</html>
