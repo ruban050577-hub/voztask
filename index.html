@@ -363,14 +363,16 @@ function startRec() {
   const tt = document.getElementById('txtext');
   tb.classList.remove('show');
 
+  let sessionFinal = '';
+
   rec.onresult = e => {
-    let interim = '', final = '';
+    let interim = '', newFinal = '';
     for (let i = e.resultIndex; i < e.results.length; i++) {
       const t = e.results[i][0].transcript;
-      e.results[i].isFinal ? (final += t + ' ') : (interim += t);
+      e.results[i].isFinal ? (newFinal += t + ' ') : (interim += t);
     }
-    if (final) fullTx += final;
-    tt.textContent = (fullTx + interim).trim() || '...';
+    if (newFinal) sessionFinal += newFinal;
+    tt.textContent = (fullTx + sessionFinal + interim).trim() || '...';
     tb.classList.add('show');
   };
 
@@ -379,7 +381,11 @@ function startRec() {
   };
 
   rec.onend = () => {
-    if (isRec) { try { rec.start(); } catch(e){} }
+    if (isRec) {
+      fullTx += sessionFinal;   // salva o que foi capturado nessa sessão
+      sessionFinal = '';         // zera para a próxima sessão
+      try { rec.start(); } catch(e){}
+    }
   };
 
   rec.start();
@@ -399,7 +405,7 @@ function stopRec() {
   p1.classList.remove('on');
   p2.classList.remove('on');
 
-  const tx = fullTx.trim();
+  const tx = (fullTx + sessionFinal).trim();
   if (tx.length > 3) parseTasks(tx);
 }
 
