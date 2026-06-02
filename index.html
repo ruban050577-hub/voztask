@@ -336,19 +336,47 @@ function toggleRec() {
   isRec ? stopRec() : startRec();
 }
 
+function makeRec() {
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  const r = new SR();
+  r.lang = 'pt-BR';
+  r.interimResults = true;
+  r.continuous = false;
+  r.maxAlternatives = 1;
+
+  r.onresult = e => {
+    let finalText = '', interim = '';
+    for (let i = 0; i < e.results.length; i++) {
+      const t = e.results[i][0].transcript;
+      e.results[i].isFinal ? (finalText += t + ' ') : (interim += t);
+    }
+    if (finalText) fullTx += finalText;
+    document.getElementById('txtext').textContent = (fullTx + interim).trim() || '...';
+    document.getElementById('txbox').classList.add('show');
+  };
+
+  r.onerror = e => {
+    if (e.error !== 'no-speech') { toast('Erro: ' + e.error); stopRec(); }
+  };
+
+  r.onend = () => {
+    if (isRec) {
+      rec = makeRec();
+      try { rec.start(); } catch(e) {}
+    }
+  };
+
+  return r;
+}
+
 function startRec() {
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
   if (!SR) return toast('Use Chrome no Android para gravar');
 
-  rec = new SR();
-  rec.lang = 'pt-BR';
-  rec.interimResults = true;
-  rec.continuous = true;
   fullTx = '';
   isRec = true;
 
   const btn = document.getElementById('recBtn');
-  const wrap = document.getElementById('recWrap');
   const lbl = document.getElementById('recLabel');
   const p1 = document.getElementById('p1');
   const p2 = document.getElementById('p2');
@@ -358,36 +386,9 @@ function startRec() {
   lbl.textContent = 'Ouvindo...';
   p1.classList.add('on');
   p2.classList.add('on');
+  document.getElementById('txbox').classList.remove('show');
 
-  const tb = document.getElementById('txbox');
-  const tt = document.getElementById('txtext');
-  tb.classList.remove('show');
-
-  let sessionFinal = '';
-
-  rec.onresult = e => {
-    let interim = '', newFinal = '';
-    for (let i = e.resultIndex; i < e.results.length; i++) {
-      const t = e.results[i][0].transcript;
-      e.results[i].isFinal ? (newFinal += t + ' ') : (interim += t);
-    }
-    if (newFinal) sessionFinal += newFinal;
-    tt.textContent = (fullTx + sessionFinal + interim).trim() || '...';
-    tb.classList.add('show');
-  };
-
-  rec.onerror = e => {
-    if (e.error !== 'no-speech') { toast('Erro: ' + e.error); stopRec(); }
-  };
-
-  rec.onend = () => {
-    if (isRec) {
-      fullTx += sessionFinal;   // salva o que foi capturado nessa sessão
-      sessionFinal = '';         // zera para a próxima sessão
-      try { rec.start(); } catch(e){}
-    }
-  };
-
+  rec = makeRec();
   rec.start();
 }
 
@@ -405,7 +406,7 @@ function stopRec() {
   p1.classList.remove('on');
   p2.classList.remove('on');
 
-  const tx = (fullTx + sessionFinal).trim();
+  const tx = fullTx.trim();
   if (tx.length > 3) parseTasks(tx);
 }
 
